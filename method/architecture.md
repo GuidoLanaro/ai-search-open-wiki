@@ -10,8 +10,8 @@ nav_order: 1
 
 ## Components
 
-1. **Trigger.** A GitHub Actions workflow (`.github/workflows/run.yml`) runs at night on the 1st and 15th of each month, and can be started manually. If the pull request of the previous run is still open, the run is skipped and reported, so two runs never cover the same window.
-2. **Agent.** Claude Code runs headless with `prompts/run.md`, read from the repository at every run: a change to the prompt is a commit, and the next run uses it.
+1. **Trigger.** A GitHub Actions workflow (`.github/workflows/run.yml`) runs at night on the 1st and 15th of each month, and can be started manually. If the pull request of the previous run is still open, the run fails with an explicit message (so GitHub notifies the maintainer) instead of covering the same window twice.
+2. **Agent.** The workflow installs the Claude Code CLI and runs it headless (`claude -p`) with `prompts/run.md`, read from the repository at every run: a change to the prompt is a commit, and the next run uses it. The agent's tools are limited to reading and writing files, web search and fetch, and `scripts/data.py`.
 3. **Acquisition.** Curated sources (by tier, RSS first), 3 to 5 open web searches, targeted searches for followed authors, and a check of each vendor on the watchlist. The window runs from the last run to today, so a late run leaves no gap.
 4. **Deduplication.** `_data/items.csv` is the index of what has already been seen. The key is the canonical URL, normalized by `scripts/data.py`.
 5. **Analysis.** Each item is tested for relevance, tagged with one to three topics (dominant first), a tier and a type, and summarized in two or three factual sentences.
@@ -26,7 +26,7 @@ nav_order: 1
 The agent writes files only. Fixed workflow steps then create a branch, commit, and open a pull request whose description is the run report.
 
 - **Merge** publishes everything in the pull request.
-- **Edits** can be made directly on the branch, or requested with a comment starting with `@claude`: a second workflow (`pr-feedback.yml`, prompt `prompts/pr-feedback.md`) applies only what was asked, only to files the pull request already touches, and asks back when the request is ambiguous.
+- **Edits** can be made directly on the branch, or requested with a comment mentioning `@claude`: a second workflow (`pr-feedback.yml`, using `anthropics/claude-code-action` with `prompts/pr-feedback.md`) applies only what was asked, only to files the pull request already touches, and asks back when the request is ambiguous. Only comments by the repository owner trigger it.
 - **Closing** without merge discards the run.
 
 An item in an open pull request is under review; a merged item is published; an item removed before merge is discarded. The history of each decision stays in the pull request.
@@ -34,7 +34,7 @@ An item in an open pull request is under review; a merged item is published; an 
 ## Guarantees in code, not only in the prompt
 
 - **Branch protection** on `main`: no change reaches the site without a pull request.
-- **Closed list of writes.** The agent may append items, propose sources and authors, update two vendor columns, edit three sections of the topic pages and create the run report. Validation in CI rejects any other change, and any modification of existing items.
+- **Closed list of writes.** The agent may append items, propose sources and authors, update two vendor columns, edit three sections of the topic pages and create the run report. `scripts/validate_data.py` rejects any other change, and any modification of existing items. It runs inside the run workflow before the pull request is opened (a failure opens the pull request as a draft, with the errors listed), after every `@claude` correction (a failure is posted as a comment), and on pull requests opened by people (`validate.yml`). Validation is built into the agent workflows because changes pushed with the workflow token do not trigger other workflows.
 - **CSV writes only through `scripts/data.py`**, which enforces the [data schema](data-schema.html), quoting and deduplication. The same checks run in CI.
 - **No git access for the agent.** Branch, commit and pull request are handled by the workflow.
 - **Limits.** The prompt sets caps the agent can count (searches, articles per source, one attempt per source). The workflow sets a maximum number of turns and a time limit. If a run is interrupted, the pull request opens as a draft marked as interrupted, and the report written so far shows what was done.
@@ -81,4 +81,10 @@ Two patterns from the [openwiki](https://github.com/langchain-ai/openwiki) asses
 | 2026-11-18 | Site on GitHub Pages with Jekyll and Just the Docs | Reads Markdown and CSV natively, with no build pipeline to maintain; built-in navigation and search. |
 | 2026-11-18 | Licences: MIT for code, CC BY 4.0 for content | Standard choices for an open project; content can be reused with attribution. |
 | 2026-11-18 | Vendor watchlist limited to products dedicated to AI visibility | Platforms where AI search features are a small part of a broader product add noise to every run; their relevant moves are caught by open search. |
+| 2026-11-18 | The run calls the Claude Code CLI directly in the workflow; corrections in pull requests use `anthropics/claude-code-action` | The run needs full control over limits, exit status and publication steps; the action already handles comment triggers and commits to the pull request branch. |
+| 2026-11-18 | Validation (`scripts/validate_data.py`) runs inside the agent workflows, not only as a separate check | Pull requests and commits made with the workflow token do not trigger other workflows, so a separate check would never run on them. |
+| 2026-11-18 | Only the repository owner can trigger `@claude` corrections | The repository is public: anyone can comment, and a comment must not be able to start the agent. |
+| 2026-11-18 | A run that finds the previous run's pull request still open fails instead of skipping silently | A failed workflow notifies the maintainer; a silent skip would go unnoticed. |
+| 2026-11-18 | Corrections can remove only rows added in the same pull request (`remove-item`, `remove-proposal`) | Discarding part of a run must not require editing CSV by hand, and the item log on `main` stays append-only. |
+| 2026-11-18 | Schedule disabled until manual runs are reliable | Follows the validation path: manual runs first, then the cron. |
 | 2026-11-18 | New run zero in English over six months; curated sources, vendors and authors migrated from the prototype, earlier items and pages not migrated | The prototype's content was in Italian and dated July 2026; a new run zero also tests the new pipeline end to end. |

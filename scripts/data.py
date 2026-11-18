@@ -11,6 +11,8 @@ Commands:
   propose-source ...       append a source with status "proposed"
   propose-author ...       append an author with status "proposed"
   update-vendor ...        update last_move / last_move_date of an active vendor
+  remove-item --url        remove an item added in the current pull request
+  remove-proposal ...      remove a source or author with status "proposed"
   validate                 check all CSV files (used in CI); exit 1 on errors
 
 Standard library only. Data directory: _data/ next to this script's parent,
@@ -314,6 +316,27 @@ def cmd_update_vendor(a):
     print(f"updated vendor {a.id}")
 
 
+def cmd_remove_item(a):
+    key = dedup_key(a.url)
+    rows = read_rows("items")
+    kept = [r for r in rows if dedup_key(r["url"]) != key]
+    if len(kept) == len(rows):
+        raise DataError(f"no item with url {a.url!r}")
+    write_rows("items", kept)
+    print(f"removed item {a.url} (CI rejects removals of items already on main)")
+
+
+def cmd_remove_proposal(a):
+    rows = read_rows(a.table)
+    match = [r for r in rows if r["id"] == a.id]
+    if not match:
+        raise DataError(f"no {a.table} row with id {a.id!r}")
+    if match[0]["status"] != "proposed":
+        raise DataError(f"{a.table} row {a.id!r} is {match[0]['status']!r}, not 'proposed'")
+    write_rows(a.table, [r for r in rows if r["id"] != a.id])
+    print(f"removed proposed {a.table} row {a.id}")
+
+
 def cmd_validate(a):
     tables, errors = {}, []
     for name in COLUMNS:
@@ -374,6 +397,15 @@ def main(argv=None):
     s.add_argument("--last-move", required=True)
     s.add_argument("--date", required=True)
     s.set_defaults(fn=cmd_update_vendor)
+
+    s = sub.add_parser("remove-item", help="only for items added in the current pull request")
+    s.add_argument("--url", required=True)
+    s.set_defaults(fn=cmd_remove_item)
+
+    s = sub.add_parser("remove-proposal", help="remove a source or author with status 'proposed'")
+    s.add_argument("--table", required=True, choices=["sources", "authors"])
+    s.add_argument("--id", required=True)
+    s.set_defaults(fn=cmd_remove_proposal)
 
     s = sub.add_parser("validate"); s.set_defaults(fn=cmd_validate)
 
