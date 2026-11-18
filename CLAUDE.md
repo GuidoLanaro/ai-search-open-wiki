@@ -13,7 +13,7 @@ An open, agent-maintained wiki on visibility in AI answer engines, published at 
 1. **Everything versioned.** Prompts, taxonomy, data, schema and documentation change only through commits. Project knowledge that matters goes into a committed file, not into a session.
 2. **Every design decision is logged** in the Decision Log of `method/architecture.md`, with date and reason, before the session ends.
 3. **The run prompt is the most critical file.** Change `prompts/run.md` only with a Decision Log entry explaining why.
-4. **CSV data is written only through `scripts/data.py`**, never by hand. Run `python scripts/data.py validate` before committing any change to `_data/`.
+4. **CSV data is written only through `scripts/data.py`**, never by hand: `set-field` changes a source, author or vendor, `python3 scripts/data.py --help` lists the rest. Run `python3 scripts/data.py validate` before committing any change to `_data/`.
 5. **Keep docs and code aligned.** If the schema changes, update `method/data-schema.md`, `scripts/data.py` and the prompt together.
 6. **Commits:** English, imperative, with a scope. Examples: `sources: add Xfunnel as tier B`, `prompt: tighten dedup rules`, `site: add sources list to topic pages`.
 7. **No direct pushes to `main`:** work on a branch and open a pull request.
@@ -36,8 +36,8 @@ An open, agent-maintained wiki on visibility in AI answer engines, published at 
 - [x] Sources, vendors and authors migrated from the prototype
 - [x] PR-feedback prompt
 - [x] Workflows and CI validation
-- [ ] Repository settings (secret, Actions permissions, branch protection): see `method/setup.md`
-- [ ] First manual run tested
-- [ ] Site published on GitHub Pages
-- [ ] Run zero reviewed and merged
+- [x] Secret and Actions permissions
+- [x] First manual run tested (test run, then corrections via `@claude`)
+- [x] Run zero reviewed and merged (2026-11-18, 22 items)
+- [ ] Repository public, branch protection, site published on GitHub Pages
 - [ ] Scheduled runs enabled

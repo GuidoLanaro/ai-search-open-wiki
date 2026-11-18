@@ -13,6 +13,7 @@ Commands:
   update-vendor ...        update last_move / last_move_date of an active vendor
   remove-item --url        remove an item added in the current pull request
   remove-proposal ...      remove a source or author with status "proposed"
+  set-field ...            maintainers only: change one field of a source, author or vendor
   validate                 check all CSV files (used in CI); exit 1 on errors
 
 Standard library only. Data directory: _data/ next to this script's parent,
@@ -337,6 +338,29 @@ def cmd_remove_proposal(a):
     print(f"removed proposed {a.table} row {a.id}")
 
 
+def cmd_set_field(a):
+    if a.table == "items":
+        raise DataError("items are append-only: use remove-item on an unmerged item instead")
+    if a.field == "id" or a.field not in data_columns(a.table):
+        raise DataError(f"{a.table}.csv has no editable field {a.field!r}")
+    rows = read_rows(a.table)
+    for row in rows:
+        if row["id"] == a.id:
+            row[a.field] = " ".join(a.value.split())
+            break
+    else:
+        raise DataError(f"no {a.table} row with id {a.id!r}")
+    errors = validate_table(a.table, rows) + cross_check({a.table: rows})
+    if errors:
+        raise DataError("; ".join(errors))
+    write_rows(a.table, rows)
+    print(f"{a.table}.{a.id}.{a.field} updated")
+
+
+def data_columns(table):
+    return COLUMNS[table]
+
+
 def cmd_validate(a):
     tables, errors = {}, []
     for name in COLUMNS:
@@ -406,6 +430,13 @@ def main(argv=None):
     s.add_argument("--table", required=True, choices=["sources", "authors"])
     s.add_argument("--id", required=True)
     s.set_defaults(fn=cmd_remove_proposal)
+
+    s = sub.add_parser("set-field", help="maintainers only: change one field of a source, author or vendor")
+    s.add_argument("--table", required=True, choices=["sources", "authors", "vendors"])
+    s.add_argument("--id", required=True)
+    s.add_argument("--field", required=True)
+    s.add_argument("--value", required=True)
+    s.set_defaults(fn=cmd_set_field)
 
     s = sub.add_parser("validate"); s.set_defaults(fn=cmd_validate)
 

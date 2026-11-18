@@ -100,6 +100,7 @@ Two URLs are the same item when they match after normalization:
 | `update-vendor` | run | Update `last_move` and `last_move_date` of an active vendor |
 | `remove-item --url` | PR corrections | Drop an item added in the current pull request |
 | `remove-proposal --table --id` | PR corrections | Drop a proposed source or author |
+| `set-field --table --id --field --value` | Maintainers | Change one field of a source, author or vendor (items cannot be edited) |
 | `validate` | CI, people | Check every file against this schema |
 
 `scripts/validate_data.py` adds the checks that need the base branch: items are append-only, existing sources and authors are unchanged, only two vendor columns change, and a run touches only the files it is allowed to.
