@@ -112,12 +112,14 @@ If nothing in the window passes the relevance test, still write the report: sect
   - one attempt per source or page: if it fails or times out, record it in Anomalies and move on, without retrying.
 
   If a step cannot be completed within the caps, record in Anomalies what was left out. The workflow also enforces a maximum number of turns and a time limit; if it stops you, the report written so far is what the reviewer sees.
+- **Coverage.** The caps limit the work done *per* source; they are not a reason to skip sources. The opening line of the run tells you your budget in turns and minutes: plan for it (run independent fetches and searches in parallel) and use it to check every active source, every followed author and every active vendor. Do not finish early by choice. Before writing the highlights, section (f) of the report must list every active source, author and vendor that was not checked, each with its reason (fetch failed, budget spent). A run that silently covers part of the perimeter is worse than a run that says what it missed.
 
 ## Run zero
 
 When `runs/` is empty, the run lays the foundation of the wiki:
 - the window is the 6 months before today;
 - the caps rise to at most 10 open searches and 15 full articles per source, because the window is much longer (the workflow raises its turn and time limits for run zero accordingly);
+- feeds rarely reach six months back: use them for the most recent weeks and targeted searches on each source for the rest of the window, so that every active source is still covered;
 - in addition to new material, include foundational pieces published earlier that the topic pages cannot do without (the original GEO paper, official engine documentation), each added as an item with its real publication date;
 - the topic pages are written from their empty templates, following the same writing rules;
 - the report notes in (a) that this is run zero, and (c) explains the structure chosen for each page.
