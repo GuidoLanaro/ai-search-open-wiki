@@ -1,0 +1,19 @@
+{%- comment -%}
+Lists every item tagged with the current page's topic_id, newest first.
+Items whose first (dominant) topic is this one are marked as primary.
+{%- endcomment -%}
+{%- assign items = site.data.items | sort: "published" | reverse -%}
+{%- assign count = 0 -%}
+<ul class="topic-sources">
+{%- for item in items -%}
+  {%- assign item_topics = item.topics | split: ";" -%}
+  {%- if item_topics contains page.topic_id -%}
+    {%- assign count = count | plus: 1 -%}
+    <li>
+      <a href="{{ item.url }}">{{ item.title }}</a>
+      <span class="text-grey-dk-000">· {{ item.published }} · tier {{ item.tier }}{% if item_topics[0] == page.topic_id %} · primary{% endif %}</span>
+    </li>
+  {%- endif -%}
+{%- endfor -%}
+</ul>
+{%- if count == 0 -%}<p><em>No items yet.</em></p>{%- endif -%}

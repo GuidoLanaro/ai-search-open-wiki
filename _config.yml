@@ -1,0 +1,37 @@
+title: AI Search Open Wiki
+description: An open, agent-maintained wiki on visibility in AI answer engines.
+baseurl: /ai-search-open-wiki
+url: https://guidolanaro.github.io
+
+remote_theme: just-the-docs/just-the-docs
+plugins:
+  - jekyll-remote-theme
+
+search_enabled: true
+heading_anchors: true
+color_scheme: light
+
+aux_links:
+  "GitHub repository": "https://github.com/GuidoLanaro/ai-search-open-wiki"
+aux_links_new_tab: true
+
+footer_content: >-
+  Content: <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>.
+  Code: MIT. Maintained by an AI agent with human review of every change.
+
+last_edit_timestamp: true
+gh_edit_link: true
+gh_edit_link_text: "View this page on GitHub"
+gh_edit_repository: "https://github.com/GuidoLanaro/ai-search-open-wiki"
+gh_edit_branch: "main"
+gh_edit_view_mode: "tree"
+
+exclude:
+  - README.md
+  - CLAUDE.md
+  - LICENSE
+  - LICENSE-CONTENT
+  - prompts/
+  - scripts/
+  - .github/
+  - "*.csv.tmp"
