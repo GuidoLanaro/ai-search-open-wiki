@@ -1,5 +1,5 @@
 id,name,url,changelog,last_move,last_move_date,status,notes
-profound,Profound,https://www.tryprofound.com/,https://www.tryprofound.com/blog,,,active,Category leader. Also in sources.csv (profound-blog): here the run tracks product and market moves.
+profound,Profound,https://www.tryprofound.com/,https://www.tryprofound.com/blog,"Series D: 180M dollars at 1.8B valuation (Sequoia, Kleiner Perkins); adds AI Marketer and Ads Studio",2026-09-15,active,Category leader. Also in sources.csv (profound-blog): here the run tracks product and market moves.
 peec-ai,Peec AI,https://peec.ai,https://peec.ai/blog,,,active,Mid-market tracking vendor. Also in sources.csv (peec-blog).
 ahrefs-brand-radar,Ahrefs Brand Radar,https://ahrefs.com/brand-radar,https://ahrefs.com/blog/,,,active,"Track the Brand Radar product (AI share of voice, index size), not the general SEO blog."
 semrush-ai-visibility,Semrush AI Visibility,https://ai-visibility-index.semrush.com/,https://www.semrush.com/blog/,,,active,Track the AI Visibility Toolkit and Index (knowledge base: semrush.com/kb). Semrush is an Adobe company.
@@ -7,4 +7,4 @@ otterly,Otterly AI,https://otterly.ai,,,,active,Low-cost citation monitoring.
 athenahq,AthenaHQ,https://www.athenahq.ai,,,,active,Y Combinator company; founders from Google Search and DeepMind.
 evertune,Evertune,https://www.evertune.ai,,,,active,AI Brand Index based on a consumer panel.
 conductor,Conductor,https://www.conductor.com,,,,active,Enterprise platform covering SEO and AI search visibility.
-scrunch,Scrunch AI (Sitecore),https://scrunch.com,https://scrunch.com/blog,,,active,Acquired by Sitecore in June 2026: weigh content also for Sitecore's commercial interest.
+scrunch,Scrunch AI (Sitecore),https://scrunch.com,https://scrunch.com/blog,"Acquired by Sitecore, announced 3 June 2026 (price undisclosed; Bloomberg reported about 225M dollars)",2026-06-03,active,Acquired by Sitecore in June 2026: weigh content also for Sitecore's commercial interest.
