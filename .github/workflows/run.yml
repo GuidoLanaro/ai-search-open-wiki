@@ -1,0 +1,162 @@
+name: Run
+
+# Scheduled research run: the agent follows prompts/run.md, then fixed steps
+# validate the changes, commit them to run/YYYY-MM-DD and open a pull request.
+# The agent has no git access; nothing reaches main without review.
+
+on:
+  # Scheduled runs are enabled once manual runs are reliable (method/setup.md).
+  # schedule:
+  #   - cron: "17 2 1,15 * *" # 1st and 15th, 03:17 in Italy in winter, 04:17 in summer
+  workflow_dispatch:
+    inputs:
+      max_turns:
+        description: "Maximum agent turns (empty: 200, or 500 for run zero)"
+        required: false
+      timeout_minutes:
+        description: "Time limit for the agent, in minutes (empty: 60, or 180 for run zero)"
+        required: false
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: run
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Skip if the previous run is still under review
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          open=$(gh api "repos/${{ github.repository }}/pulls?state=open&per_page=100" \
+            --jq '[.[] | select(.head.ref | startswith("run/")) | "#\(.number)"] | join(", ")')
+          if [ -n "$open" ]; then
+            echo "::error::Run skipped: the pull request of a previous run is still open ($open). Merge or close it, then start the run manually."
+            echo "Run skipped: the pull request of a previous run is still open ($open)." >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+
+      - name: Set up the run
+        id: setup
+        run: |
+          date=$(date -u +%F)
+          if ls runs/[0-9]*.md >/dev/null 2>&1; then
+            zero=false; turns=200; minutes=60
+          else
+            zero=true; turns=500; minutes=180
+          fi
+          if [ -n "${{ inputs.max_turns }}" ]; then turns="${{ inputs.max_turns }}"; fi
+          if [ -n "${{ inputs.timeout_minutes }}" ]; then minutes="${{ inputs.timeout_minutes }}"; fi
+          if [ -e "runs/$date.md" ]; then
+            echo "::error::runs/$date.md already exists on main"; exit 1
+          fi
+          {
+            echo "date=$date"
+            echo "zero=$zero"
+            echo "turns=$turns"
+            echo "minutes=$minutes"
+          } >> "$GITHUB_OUTPUT"
+          echo "Run $date · run zero: $zero · max turns: $turns · time limit: $minutes min" >> "$GITHUB_STEP_SUMMARY"
+          git switch -c "run/$date"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install Claude Code
+        run: npm install -g @anthropic-ai/claude-code
+
+      - name: Run the agent
+        id: agent
+        env:
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          DATE: ${{ steps.setup.outputs.date }}
+          ZERO: ${{ steps.setup.outputs.zero }}
+          TURNS: ${{ steps.setup.outputs.turns }}
+          MINUTES: ${{ steps.setup.outputs.minutes }}
+        run: |
+          prompt="Today is $DATE. Run zero: $ZERO. The instructions below (prompts/run.md) are your complete instructions for this run.
+
+          $(cat prompts/run.md)"
+          result="$RUNNER_TEMP/agent-result.json"
+          set +e
+          timeout "${MINUTES}m" claude -p "$prompt" \
+            --max-turns "$TURNS" \
+            --allowedTools "Read,Write,Edit,Glob,Grep,WebSearch,WebFetch,Bash(python3 scripts/data.py:*),Bash(python scripts/data.py:*)" \
+            --output-format json > "$result"
+          code=$?
+          set -e
+          status=completed
+          if [ "$code" -eq 124 ]; then
+            status="time limit of $MINUTES minutes reached"
+          elif jq -e '.subtype == "error_max_turns"' "$result" >/dev/null 2>&1; then
+            status="turn limit of $TURNS turns reached"
+          elif [ "$code" -ne 0 ]; then
+            status="agent exited with code $code"
+          fi
+          echo "status=$status" >> "$GITHUB_OUTPUT"
+          echo "Agent: $status" >> "$GITHUB_STEP_SUMMARY"
+          jq -r '"Turns used: \(.num_turns // "?")"' "$result" >> "$GITHUB_STEP_SUMMARY" 2>/dev/null || true
+
+      - name: Validate the changes
+        id: validate
+        run: |
+          set +e
+          python3 scripts/validate_data.py --base origin/main --mode run > "$RUNNER_TEMP/validation.md"
+          code=$?
+          set -e
+          if [ "$code" -eq 0 ]; then echo "ok=true" >> "$GITHUB_OUTPUT"; else echo "ok=false" >> "$GITHUB_OUTPUT"; fi
+          cat "$RUNNER_TEMP/validation.md" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Commit and open the pull request
+        env:
+          GH_TOKEN: ${{ github.token }}
+          DATE: ${{ steps.setup.outputs.date }}
+          STATUS: ${{ steps.agent.outputs.status }}
+          VALID: ${{ steps.validate.outputs.ok }}
+        run: |
+          if [ -z "$(git status --porcelain)" ]; then
+            echo "::error::The agent changed nothing ($STATUS)."; exit 1
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -q -m "run: $DATE"
+          git push -q -f -u origin "run/$DATE"
+
+          report="runs/$DATE.md"
+          body="$RUNNER_TEMP/pr-body.md"
+          {
+            if [ "$STATUS" != completed ]; then
+              echo "> **Run interrupted** ($STATUS). The report below shows what was done before the stop."
+              echo
+            fi
+            if [ "$VALID" != true ]; then
+              echo "> **Validation failed**: see the list at the end. Fix the branch or close this pull request."
+              echo
+            fi
+            if [ -f "$report" ]; then
+              # strip the Jekyll front matter
+              awk 'NR==1 && /^---$/ {fm=1; next} fm && /^---$/ {fm=0; next} !fm' "$report"
+            else
+              echo "No run report was written. Changed files:"
+              git diff --name-only HEAD~1 | sed 's/^/- /'
+            fi
+            echo
+            echo "---"
+            cat "$RUNNER_TEMP/validation.md"
+          } > "$body"
+
+          draft=""
+          if [ "$STATUS" != completed ] || [ "$VALID" != true ]; then draft="--draft"; fi
+          gh pr create --base main --head "run/$DATE" --title "Run $DATE" --body-file "$body" $draft

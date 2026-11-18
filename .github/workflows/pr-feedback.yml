@@ -1,0 +1,64 @@
+name: PR feedback
+
+# Corrections on a pull request: when the repository owner comments "@claude",
+# the agent applies the request (CLAUDE.md routes it to prompts/pr-feedback.md),
+# then the pull request is validated again. Commits made with the workflow token
+# do not trigger other workflows, so validation runs here.
+
+on:
+  issue_comment:
+    types: [created]
+  pull_request_review_comment:
+    types: [created]
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+concurrency:
+  group: pr-feedback-${{ github.event.issue.number || github.event.pull_request.number }}
+  cancel-in-progress: false
+
+jobs:
+  feedback:
+    if: >-
+      contains(github.event.comment.body, '@claude') &&
+      github.event.comment.user.login == github.repository_owner &&
+      (github.event.issue.pull_request || github.event.pull_request)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          github_token: ${{ github.token }}
+          claude_args: >-
+            --max-turns 40
+            --allowedTools "Read,Write,Edit,Glob,Grep,WebFetch,Bash(python3 scripts/data.py:*),Bash(python scripts/data.py:*),Bash(git diff:*)"
+
+      - name: Validate the pull request after the correction
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.issue.number || github.event.pull_request.number }}
+        run: |
+          head=$(gh api "repos/${{ github.repository }}/pulls/$PR" --jq .head.ref)
+          git fetch -q origin "$head" main
+          git checkout -q "origin/$head"
+          base=$(git merge-base origin/main HEAD)
+          mode=any
+          case "$head" in run/*) mode=run ;; esac
+          set +e
+          python3 scripts/validate_data.py --base "$base" --mode "$mode" > "$RUNNER_TEMP/validation.md"
+          code=$?
+          set -e
+          cat "$RUNNER_TEMP/validation.md" >> "$GITHUB_STEP_SUMMARY"
+          if [ "$code" -ne 0 ]; then
+            gh pr comment "$PR" --body-file "$RUNNER_TEMP/validation.md"
+            exit 1
+          fi

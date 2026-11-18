@@ -44,7 +44,7 @@ The vendor watchlist sits outside the taxonomy: vendor movements go to the run r
 | `topics/*.md` | edit the sections *State of the art*, *Open contradictions* and *Last updated* |
 | `runs/YYYY-MM-DD.md` | create the report for this run (today's date) |
 
-Never edit CSV files by hand. Never run `git` or `gh`: the workflow commits your changes and opens the pull request. Any change outside the table above makes the pull request fail validation.
+Run the script as `python3 scripts/data.py <command> ...` (`python3 scripts/data.py <command> --help` shows the options). Never edit CSV files by hand. Never run `git` or `gh`: the workflow commits your changes and opens the pull request. Any change outside the table above makes the pull request fail validation.
 
 ## Run sequence
 

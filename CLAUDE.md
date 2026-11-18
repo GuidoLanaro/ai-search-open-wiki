@@ -1,6 +1,8 @@
 # AI Search Open Wiki — project instructions
 
-These instructions are for interactive sessions on this repository (maintenance, design changes). The scheduled run follows `prompts/run.md`; corrections requested in pull requests follow `prompts/pr-feedback.md`.
+These instructions are for interactive sessions on this repository (maintenance, design changes). The scheduled run follows `prompts/run.md`.
+
+**If you were called by an `@claude` comment on a pull request, stop reading here and follow `prompts/pr-feedback.md`: it is your complete instruction set for that task.**
 
 ## What this is
 
@@ -32,8 +34,10 @@ An open, agent-maintained wiki on visibility in AI answer engines, published at 
 - [x] Architecture, taxonomy, source policy, data schema
 - [x] Run prompt
 - [x] Sources, vendors and authors migrated from the prototype
-- [ ] PR-feedback prompt
-- [ ] Workflows and CI validation
+- [x] PR-feedback prompt
+- [x] Workflows and CI validation
+- [ ] Repository settings (secret, Actions permissions, branch protection): see `method/setup.md`
+- [ ] First manual run tested
 - [ ] Site published on GitHub Pages
 - [ ] Run zero reviewed and merged
 - [ ] Scheduled runs enabled

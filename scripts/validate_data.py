@@ -175,7 +175,8 @@ def main():
     # Write rules of a run
     if not errors:
         changes = changed_paths(a.base)
-        check_paths(changes, a.base, rule_issues)
+        if a.mode == "run":  # people may change any file
+            check_paths(changes, a.base, rule_issues)
         check_items(a.base, rule_issues)
         check_proposals(a.base, "sources", rule_issues)
         check_proposals(a.base, "authors", rule_issues)

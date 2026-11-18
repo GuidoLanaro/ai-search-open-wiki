@@ -1,0 +1,44 @@
+name: Validate
+
+# Pull requests opened or updated by people, and every push to main.
+# Run pull requests are validated inside run.yml and pr-feedback.yml, because
+# changes pushed with the workflow token do not trigger this workflow.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate
+        env:
+          EVENT: ${{ github.event_name }}
+          BASE_REF: ${{ github.base_ref }}
+          HEAD_REF: ${{ github.head_ref }}
+        run: |
+          if [ "$EVENT" = pull_request ]; then
+            mode=any
+            case "$HEAD_REF" in run/*) mode=run ;; esac
+            set +e
+            python3 scripts/validate_data.py --base "origin/$BASE_REF" --mode "$mode" > "$RUNNER_TEMP/validation.md"
+            code=$?
+            set -e
+          else
+            set +e
+            python3 scripts/data.py validate > "$RUNNER_TEMP/validation.md" 2>&1
+            code=$?
+            set -e
+          fi
+          cat "$RUNNER_TEMP/validation.md"
+          cat "$RUNNER_TEMP/validation.md" >> "$GITHUB_STEP_SUMMARY"
+          exit "$code"
