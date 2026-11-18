@@ -31,7 +31,7 @@ Without the second option the run cannot open its pull request.
 
 **Settings → Branches → Add rule** (or **Rules → Rulesets**) for `main`: **Require a pull request before merging**, with zero required approvals (GitHub does not let you approve your own pull request).
 
-Do not add the *Validate* workflow as a required status check: run pull requests are validated inside the run workflow, because changes pushed with the workflow token do not trigger other workflows, and a required check would never report.
+Do not add the *Validate* workflow as a required status check: run pull requests are validated inside the run workflow. GitHub holds workflows triggered by the workflow token for manual approval ("Action required" in the Actions tab), so a required check would block every run pull request. Those pending *Validate* runs can be ignored.
 
 On private repositories, branch protection needs a paid GitHub plan; on public ones it is free.
 

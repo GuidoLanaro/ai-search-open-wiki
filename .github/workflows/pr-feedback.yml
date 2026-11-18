@@ -2,8 +2,9 @@ name: PR feedback
 
 # Corrections on a pull request: when the repository owner comments "@claude",
 # the agent applies the request (CLAUDE.md routes it to prompts/pr-feedback.md),
-# then the pull request is validated again. Commits made with the workflow token
-# do not trigger other workflows, so validation runs here.
+# then the pull request is validated again and, on run pull requests, its
+# description is rebuilt from the corrected report. Validation runs here because
+# workflows triggered by the workflow token wait for manual approval.
 
 on:
   issue_comment:
@@ -58,6 +59,26 @@ jobs:
           code=$?
           set -e
           cat "$RUNNER_TEMP/validation.md" >> "$GITHUB_STEP_SUMMARY"
+
+          # On a run pull request, rebuild the description from the corrected report,
+          # keeping the "Run interrupted" notice of the original run if there was one.
+          report="runs/${head#run/}.md"
+          if [ "$mode" = run ] && [ -f "$report" ]; then
+            body="$RUNNER_TEMP/pr-body.md"
+            {
+              gh api "repos/${{ github.repository }}/pulls/$PR" --jq .body | grep '^> \*\*Run interrupted\*\*' && echo || true
+              if [ "$code" -ne 0 ]; then
+                echo "> **Validation failed**: see the list at the end. Fix the branch or close this pull request."
+                echo
+              fi
+              awk 'NR==1 && /^---$/ {fm=1; next} fm && /^---$/ {fm=0; next} !fm' "$report"
+              echo
+              echo "---"
+              cat "$RUNNER_TEMP/validation.md"
+            } > "$body"
+            gh api -X PATCH "repos/${{ github.repository }}/pulls/$PR" -F "body=@$body" --silent
+          fi
+
           if [ "$code" -ne 0 ]; then
             gh pr comment "$PR" --body-file "$RUNNER_TEMP/validation.md"
             exit 1
