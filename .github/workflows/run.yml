@@ -30,7 +30,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 240
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
@@ -69,7 +69,7 @@ jobs:
           echo "Run $date · run zero: $zero · max turns: $turns · time limit: $minutes min" >> "$GITHUB_STEP_SUMMARY"
           git switch -c "run/$date"
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
 
@@ -85,7 +85,7 @@ jobs:
           TURNS: ${{ steps.setup.outputs.turns }}
           MINUTES: ${{ steps.setup.outputs.minutes }}
         run: |
-          prompt="Today is $DATE. Run zero: $ZERO. The instructions below (prompts/run.md) are your complete instructions for this run.
+          prompt="Today is $DATE. Run zero: $ZERO. Budget for this run: at most $TURNS turns and $MINUTES minutes. The instructions below (prompts/run.md) are your complete instructions for this run.
 
           $(cat prompts/run.md)"
           result="$RUNNER_TEMP/agent-result.json"
