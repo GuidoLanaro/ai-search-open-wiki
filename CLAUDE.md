@@ -39,5 +39,5 @@ An open, agent-maintained wiki on visibility in AI answer engines, published at 
 - [x] Secret and Actions permissions
 - [x] First manual run tested (test run, then corrections via `@claude`)
 - [x] Run zero reviewed and merged (2026-11-18, 22 items)
-- [ ] Repository public, branch protection, site published on GitHub Pages
-- [ ] Scheduled runs enabled
+- [x] Repository public, branch protection, site published on GitHub Pages (2026-11-20)
+- [x] Scheduled runs enabled (1st and 15th of each month)
