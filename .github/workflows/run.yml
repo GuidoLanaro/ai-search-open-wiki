@@ -5,9 +5,8 @@ name: Run
 # The agent has no git access; nothing reaches main without review.
 
 on:
-  # Scheduled runs are enabled once manual runs are reliable (method/setup.md).
-  # schedule:
-  #   - cron: "17 2 1,15 * *" # 1st and 15th, 03:17 in Italy in winter, 04:17 in summer
+  schedule:
+    - cron: "17 2 1,15 * *" # 1st and 15th, 03:17 in Italy in winter, 04:17 in summer
   workflow_dispatch:
     inputs:
       max_turns:

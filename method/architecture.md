@@ -6,7 +6,7 @@ nav_order: 1
 
 # Architecture
 
-*Last updated: 2026-11-18*
+*Last updated: 2026-11-20*
 
 ## Components
 
@@ -95,4 +95,5 @@ Two patterns from the [openwiki](https://github.com/langchain-ai/openwiki) asses
 | 2026-11-18 | When a feed is shorter than the window or cannot be fetched, the run covers the source with a targeted search | High-volume feeds hold a few days of posts (Search Engine Journal about three); Search Engine Land and Moz cannot be fetched by the run's tools. |
 | 2026-11-18 | Feed fixes after run zero: Google Search Central Blog (`feed.xml`), Google's Search blog moved to its current section feed | Run zero reported a 404 and an outdated feed. |
 | 2026-11-18 | Maintainers change sources, authors and vendors with `data.py set-field`; items stay append-only | Keeps the rule that CSV data is never edited by hand, for people too. |
+| 2026-11-20 | Repository public, site on GitHub Pages, branch protection on `main` (pull request required, no bypass), schedule enabled | Test run, run zero and `@claude` corrections worked end to end; the feed and label fixes from run zero are merged. |
 | 2026-11-18 | New run zero in English over six months; curated sources, vendors and authors migrated from the prototype, earlier items and pages not migrated | The prototype's content was in Italian and dated July 2026; a new run zero also tests the new pipeline end to end. |
